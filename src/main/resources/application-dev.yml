@@ -1,0 +1,25 @@
+# ===========================================
+# Configuracion para ambiente DESARROLLO
+# ===========================================
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/resumen_nomina_dev}
+      auto-index-creation: true
+
+app:
+  cache:
+    enabled: true
+    ttl-seconds: 600
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://dev.elektra.com}
+
+# AWS deshabilitado en dev
+aws:
+  secrets:
+    enabled: false
+
+logging:
+  level:
+    com.elektra: DEBUG
+    org.springframework.data.mongodb: INFO

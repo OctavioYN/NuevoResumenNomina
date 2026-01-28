@@ -1,0 +1,49 @@
+# ===========================================
+# Dockerfile para Resumen Nomina API
+# Ambiente: LOCAL / Desarrollo
+# ===========================================
+
+# Build stage
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# Copiar archivos de Maven
+COPY pom.xml .
+COPY src ./src
+
+# Compilar el proyecto
+RUN mvn clean package -DskipTests
+
+# Production stage
+FROM eclipse-temurin:17-jre-alpine
+
+LABEL maintainer="COMPENSALIA"
+LABEL application="resumen-nomina-api"
+LABEL version="1.0.0"
+
+# Configuración de timezone
+ENV TZ=America/Mexico_City
+
+# Perfil de Spring Boot
+ENV SPRING_PROFILES_ACTIVE=local
+
+WORKDIR /opt
+
+# Copiar JAR desde el build stage
+COPY --from=build /app/target/resumen-nomina-1.0.0-SNAPSHOT.jar /opt/resumen-nomina.jar
+
+# Puerto de la aplicación
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Configuración JVM optimizada para contenedores
+ENV JAVA_OPTS="-XX:+UseContainerSupport \
+               -XX:MaxRAMPercentage=75.0 \
+               -XX:InitialRAMPercentage=50.0 \
+               -Djava.security.egd=file:/dev/./urandom"
+
+# Comando de inicio
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /opt/resumen-nomina.jar"]

@@ -1,0 +1,30 @@
+# ===========================================
+# Configuracion para ambiente LOCAL
+# ===========================================
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/resumen_nomina_local
+      auto-index-creation: true
+
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+# Cache local simple
+app:
+  cache:
+    enabled: true
+    ttl-seconds: 300
+
+# AWS deshabilitado en local
+aws:
+  secrets:
+    enabled: false
+
+logging:
+  level:
+    com.elektra: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
