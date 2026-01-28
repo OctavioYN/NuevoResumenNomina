@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Base de datos MongoDB
+  mongodb:
+    image: mongo:6.0
+    container_name: resumen-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - resumen-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    container_name: resumen-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/resumen_nomina
+      - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:80,http://localhost:4200
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - resumen-network
+    healthcheck:
+      test: curl -f http://localhost:8080/actuator/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Angular
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resumen-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - resumen-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  resumen-network:
+    driver: bridge
